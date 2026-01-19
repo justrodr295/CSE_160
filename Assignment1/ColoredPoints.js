@@ -175,10 +175,14 @@ function renderAllShapes() {
 function clearCanvas() {
   g_shapesList = [];
   renderAllShapes();
+  var img = document.getElementById('reference');
+  if (img) img.style.display = 'none';
 }
 
 function drawPicture() {
   clearCanvas();
+  var img = document.getElementById('reference');
+  if (img) img.style.display = 'inline-block';
 
   g_shapesList = [];
 
@@ -195,36 +199,36 @@ function drawPicture() {
   addQuad([-0.3, -0.2], [0.3, -0.2], [0.3,  0.05], [-0.3,  0.05], gray);
 
   // Cowlick
-  let cowLeft = new Triangle();
-  cowLeft.color = purple;
-  cowLeft.vertices = [-0.15, 0.3, 0.05, 0.3, 0.05, 0.48];
-  g_shapesList.push(cowLeft);
+  let t1 = new Triangle();
+  t1.color = purple;
+  t1.vertices = [-0.15, 0.3, 0.05, 0.3, 0.05, 0.48];
+  g_shapesList.push(t1);
 
-  let cowRight = new Triangle();
-  cowRight.color = purple;
-  cowRight.vertices = [0.05, 0.3, 0.18, 0.3, 0.18, 0.42];
-  g_shapesList.push(cowRight);
+  let t2 = new Triangle();
+  t2.color = purple;
+  t2.vertices = [0.05, 0.3, 0.18, 0.3, 0.18, 0.42];
+  g_shapesList.push(t2);
 
   // Eyes
   addQuad([-0.18, 0.10], [-0.08, 0.10], [-0.08, 0.00], [-0.18, 0.00], brown);
   addQuad([0.08, 0.10], [0.18, 0.10], [0.18, 0.00], [0.08, 0.00], brown);
 
   // Beak
-  let t2 = new Triangle();
-  t2.color = yellow;
-  t2.vertices = [-0.05, 0.00, 0.05, 0.00, 0.00, -0.08];
-  g_shapesList.push(t2);
-
-  // Tie
   let t3 = new Triangle();
   t3.color = yellow;
-  t3.vertices = [-0.2, -0.2, -0.2, -0.4, 0.0, -0.3];
+  t3.vertices = [-0.05, 0.00, 0.05, 0.00, 0.00, -0.08];
   g_shapesList.push(t3);
 
+  // Tie
   let t4 = new Triangle();
   t4.color = yellow;
-  t4.vertices = [0.2, -0.2, 0.2, -0.4, 0.0, -0.3];
+  t4.vertices = [-0.2, -0.2, -0.2, -0.4, 0.0, -0.3];
   g_shapesList.push(t4);
+
+  let t5 = new Triangle();
+  t5.color = yellow;
+  t5.vertices = [0.2, -0.2, 0.2, -0.4, 0.0, -0.3];
+  g_shapesList.push(t5);
 
   // Arms
   addQuad([-0.55, -0.45], [-0.4, -0.35], [-0.4, -0.15], [-0.55, -0.25], purple);
@@ -236,10 +240,10 @@ function drawPicture() {
   addQuad([-0.09, -0.4], [-0.05, -0.4], [-0.05, -0.6], [-0.09, -0.6], purple);
   addQuad([-0.15, -0.56], [-0.09, -0.56], [-0.09, -0.6], [-0.15, -0.6], purple);
 
-  let triLeft = new Triangle();
-  triLeft.color = purple;
-  triLeft.vertices = [-0.15, -0.56, -0.15, -0.53, -0.11, -0.56];
-  g_shapesList.push(triLeft);
+  let hook = new Triangle();
+  hook.color = purple;
+  hook.vertices = [-0.15, -0.56, -0.15, -0.53, -0.11, -0.56];
+  g_shapesList.push(hook);
 
   // R
   addQuad([-0.03, -0.4], [0.01, -0.4], [0.01, -0.6], [-0.03, -0.6], purple);
