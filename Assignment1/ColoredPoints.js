@@ -273,6 +273,9 @@ function addQuad(a, b, c, d, color) {
   g_shapesList.push(triangle2);
 }
 
+// I had ChatGPT help me write some of the logic for the game, namely with the collision detector and target spawns.
+// I also had it help me better structure (like the organizing from the helper videos) the code with the ability to switch between 
+// the drawing and game modes.
 let g_gameActive = false;
 let g_score = 0;
 let g_timeLeft = 10.0;
@@ -302,42 +305,39 @@ function startGame() {
 }
 
 function spawnTarget() {
-  let c = new Circle();
-  c.color = [1, 0, 0, 1];
-  c.size = 15;
-  c.segments = 20;
+  let goal = new Circle();
+  goal.color = [1, 0, 0, 1];
+  goal.size = 15;
+  goal.segments = 20;
 
-  c.position = [
-    Math.random() * 1.6 - 0.8,
-    Math.random() * 1.6 - 0.8
-  ];
+  goal.position = [Math.random() * 1.6 - 0.8, Math.random() * 1.6 - 0.8];
 
-  g_target = c;
-  g_shapesList.push(c);
+  g_target = goal;
+  g_shapesList.push(goal);
 }
 
 function spawnPlayer() {
-  let p = new Circle();
-  p.color = [0, 1, 0, 1];
-  p.size = 10;
-  p.segments = 12;
+  let player = new Circle();
+  player.color = [0, 1, 0, 1];
+  player.size = 10;
+  player.segments = 12;
 
-  p.position = [0, 0];
+  player.position = [0, 0];
 
-  g_player = p;
-  g_shapesList.push(p);
+  g_player = player;
+  g_shapesList.push(player);
 }
 
 function checkCollision() {
   let dx = g_player.position[0] - g_target.position[0];
   let dy = g_player.position[1] - g_target.position[1];
 
-  let dist = Math.sqrt(dx * dx + dy * dy);
+  let d = Math.sqrt(dx * dx + dy * dy);
 
   let r1 = g_player.size / 200.0;
   let r2 = g_target.size / 200.0;
 
-  if (dist < r1 + r2) {
+  if (d < r1 + r2) {
     g_score++;
     updateUI();
 
@@ -364,7 +364,6 @@ function endGame() {
   g_mode = "draw";
 
   clearInterval(g_timerInterval);
-
   alert("Your time's up! Score: " + g_score);
 
   g_shapesList = g_savedShapes || [];
