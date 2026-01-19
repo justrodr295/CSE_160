@@ -62,6 +62,7 @@ let g_selectedColor = [1.0, 1.0, 1.0, 1.0]; // Initial color: white
 let g_selectedSize = 10.0; // Initial size
 let g_selectedShape = 'Point'; // Initial shape type
 let g_segments = 10;
+let g_mode = 'draw'; // draw or game
 
 function setHTMLUi() {
   document.getElementById('redButton').addEventListener ("click", function() {
@@ -130,8 +131,11 @@ function main() {
 var g_shapesList = [];
 
 function click(ev) {
+  if (g_mode === "game") {
+    handleGameMouse(ev);
+  }
 
-  [x, y] = convertCoordinatesEventToGL(ev); 
+  [x, y] = convertCoordinatesEventToGL(ev);
 
   let point;
   // Store the coordinates to g_points arrays
@@ -198,7 +202,7 @@ function drawPicture() {
   addQuad([-0.3,  0.05], [0.3, 0.05], [0.3, 0.3], [-0.3, 0.3], purple);
   addQuad([-0.3, -0.2], [0.3, -0.2], [0.3,  0.05], [-0.3,  0.05], gray);
 
-  // Cowlick
+  // Hair
   let t1 = new Triangle();
   t1.color = purple;
   t1.vertices = [-0.15, 0.3, 0.05, 0.3, 0.05, 0.48];
@@ -255,6 +259,7 @@ function drawPicture() {
   renderAllShapes();
 }
 
+// Helper to make a rectangle out of two triangles
 function addQuad(a, b, c, d, color) {
   let triangle1 = new Triangle();
   triangle1.color = color;
@@ -266,4 +271,117 @@ function addQuad(a, b, c, d, color) {
 
   g_shapesList.push(triangle1);
   g_shapesList.push(triangle2);
+}
+
+let g_gameActive = false;
+let g_score = 0;
+let g_timeLeft = 10.0;
+
+let g_target = null;
+let g_player = null;
+let g_timerInterval = null;
+
+function startGame() {
+  g_mode = "game";
+  g_gameActive = true;
+
+  g_score = 0;
+  g_timeLeft = 10.0;
+
+  g_savedShapes = g_shapesList.slice();
+
+  g_shapesList = [];
+
+  spawnTarget();
+  spawnPlayer();
+
+  updateUI();
+
+  if (g_timerInterval) clearInterval(g_timerInterval);
+  g_timerInterval = setInterval(gameTick, 100);
+}
+
+function spawnTarget() {
+  let c = new Circle();
+  c.color = [1, 0, 0, 1];
+  c.size = 15;
+  c.segments = 20;
+
+  c.position = [
+    Math.random() * 1.6 - 0.8,
+    Math.random() * 1.6 - 0.8
+  ];
+
+  g_target = c;
+  g_shapesList.push(c);
+}
+
+function spawnPlayer() {
+  let p = new Circle();
+  p.color = [0, 1, 0, 1];
+  p.size = 10;
+  p.segments = 12;
+
+  p.position = [0, 0];
+
+  g_player = p;
+  g_shapesList.push(p);
+}
+
+function checkCollision() {
+  let dx = g_player.position[0] - g_target.position[0];
+  let dy = g_player.position[1] - g_target.position[1];
+
+  let dist = Math.sqrt(dx * dx + dy * dy);
+
+  let r1 = g_player.size / 200.0;
+  let r2 = g_target.size / 200.0;
+
+  if (dist < r1 + r2) {
+    g_score++;
+    updateUI();
+
+    g_shapesList = g_shapesList.filter(s => s !== g_target);
+
+    spawnTarget();
+  }
+}
+
+function gameTick() {
+  if (!g_gameActive) return;
+
+  g_timeLeft -= 0.1;
+
+  if (g_timeLeft <= 0) {
+    endGame();
+  }
+
+  updateUI();
+}
+
+function endGame() {
+  g_gameActive = false;
+  g_mode = "draw";
+
+  clearInterval(g_timerInterval);
+
+  alert("Your time's up! Score: " + g_score);
+
+  g_shapesList = g_savedShapes || [];
+
+  renderAllShapes();
+}
+
+function updateUI() {
+  document.getElementById("score").innerText = "Score: " + g_score;
+  document.getElementById("time").innerText =
+    "Time: " + g_timeLeft.toFixed(1);
+}
+
+function handleGameMouse(ev) {
+  let [x, y] = convertCoordinatesEventToGL(ev);
+
+  g_player.position = [x, y];
+  checkCollision();
+  renderAllShapes();
 }
