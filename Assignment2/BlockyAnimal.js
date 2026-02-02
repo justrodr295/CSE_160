@@ -195,6 +195,32 @@ const hoof = [0.2, 0.2, 0.2, 1.0];
 const eyes = [0.0, 0.0, 0.0, 1.0];
 const nose = [0.0, 0.0, 0.0, 1.0];
 
+const explodeData = {
+  body:  {dir: [0, 1, 0], spin: 30},
+  head:  {dir: [0, 1, 1], spin: 60},
+
+  upperlegFL: {dir: [-1, -1, 1], spin: 80},
+  upperlegFR: {dir: [1, -1, 1], spin: 80},
+  upperlegBL: {dir: [-1, -1, -1], spin: 80},
+  upperlegBR: {dir: [1, -1, -1], spin: 80},
+
+  lowerlegFL: {dir: [-1, -1, 1], spin: 80},
+  lowerlegFR: {dir: [1, -1, 1], spin: 80},
+  lowerlegBL: {dir: [-1, -1, -1], spin: 80},
+  lowerlegBR: {dir: [1, -1, -1], spin: 80},
+
+  tail:  {dir: [0, -1, -1], spin: 100},
+  hornL: {dir: [-1, 1, 1], spin: 120},
+  hornR: {dir: [1, 1, 1], spin: 120},
+  eyeL:  {dir: [-0.5, 1, 1], spin: 160},
+  eyeR:  {dir: [0.5, 1, 1], spin: 160},
+  nose:  {dir: [0, 1, 1], spin: 160},
+  hoofFL: {dir: [-1, -1, 1], spin: 140},
+  hoofFR: {dir: [1, -1, 1], spin: 140},
+  hoofBL: {dir: [-1, -1, -1], spin: 140},
+  hoofBR: {dir: [1, -1, -1], spin: 140}
+};
+
 function renderScene() {
   let globalRotMat = new Matrix4();
   globalRotMat.rotate(g_globalAngleX, 1, 0, 0);
@@ -208,32 +234,6 @@ function renderScene() {
   if (g_isExploding) {
     explodeT = Math.min((performance.now() - g_explodeStartTime) / 1000, 1);
   }
-
-  const explodeData = {
-    body:  {dir: [0, 1, 0], spin: 30},
-    head:  {dir: [0, 1, 1], spin: 60},
-
-    upperlegFL: {dir: [-1, -1, 1], spin: 80},
-    upperlegFR: {dir: [1, -1, 1], spin: 80},
-    upperlegBL: {dir: [-1, -1, -1], spin: 80},
-    upperlegBR: {dir: [1, -1, -1], spin: 80},
-
-    lowerlegFL: {dir: [-1, -1, 1], spin: 80},
-    lowerlegFR: {dir: [1, -1, 1], spin: 80},
-    lowerlegBL: {dir: [-1, -1, -1], spin: 80},
-    lowerlegBR: {dir: [1, -1, -1], spin: 80},
-
-    tail:  {dir: [0, -1, -1], spin: 100},
-    hornL: {dir: [-1, 1, 1], spin: 120},
-    hornR: {dir: [1, 1, 1], spin: 120},
-    eyeL:  {dir: [-0.5, 1, 1], spin: 160},
-    eyeR:  {dir: [0.5, 1, 1], spin: 160},
-    nose:  {dir: [0, 1, 1], spin: 160},
-    hoofFL: {dir: [-1, -1, 1], spin: 140},
-    hoofFR: {dir: [1, -1, 1], spin: 140},
-    hoofBL: {dir: [-1, -1, -1], spin: 140},
-    hoofBR: {dir: [1, -1, -1], spin: 140}
-  };
 
   var body = new Cube();
   body.color = fur;
@@ -673,6 +673,9 @@ function updateAnimationAngles() {
 
   g_kneeFrontRotate = 25 * (Math.sin(g_seconds * 4 + Math.PI / 2) + 1) / 2;
   g_kneeBackRotate  = 10 * (Math.sin(g_seconds * 4 - Math.PI / 2) + 1) / 2;
+
+  g_ankleRotate1 = 5 * (Math.sin(g_seconds * 4 + Math.PI / 2) + 1) / 2;
+  g_ankleRotate2 = 5 * (Math.sin(g_seconds * 4 - Math.PI / 2) + 1) / 2;
 
   g_tailRotate = 10 * Math.sin(t * 1.5);
   g_headRotate = 5 * Math.sin(t);
