@@ -983,7 +983,7 @@ function tick() {
 }
 
 function checkForOxFound() {
-  if (!camera || hasFoundOx) return;
+  if (!camera || foundOx) return;
 
   const dx = camera.eye.elements[0] - animalPosX;
   const dz = camera.eye.elements[2] - animalPosZ;
