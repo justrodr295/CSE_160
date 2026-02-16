@@ -1,4 +1,6 @@
 // ColoredPoint.js (c) 2012 matsuda
+// I reused nearly the majority of my code from the blocky animal assignment, just some modifications made it to it in addition
+// to all the new code for the blocky world.
 // Vertex shader program
 var VSHADER_SOURCE =`
   precision mediump float;
@@ -272,43 +274,24 @@ function getCell() {
   f.sub(camera.eye);
   f.normalize();
 
-  const step = 1.5;
-  const targetX = camera.eye.elements[0] + f.elements[0] * step;
-  const targetZ = camera.eye.elements[2] + f.elements[2] * step;
-
-  const ix = Math.floor(targetX + n / 2);
-  const iz = Math.floor(targetZ + n / 2);
-
-  if (ix < 0 || ix >= n || iz < 0 || iz >= n) return null;
-  return { x: ix, z: iz };
-}
-
-function getCell() {
-  if (!camera) return null;
-
-  let f = new Vector3();
-  f.set(camera.at);
-  f.sub(camera.eye);
-  f.normalize();
-
   const maxDist = 5.0;
   const stepSize = 0.5;
-  let lastIx = null;
-  let lastIz = null;
+  let lastCellx = null;
+  let lastCellz = null;
 
   for (let t = 1.0; t <= maxDist; t += stepSize) {
-    const tx = camera.eye.elements[0] + f.elements[0] * t;
-    const tz = camera.eye.elements[2] + f.elements[2] * t;
+    const worldx = camera.eye.elements[0] + f.elements[0] * t;
+    const worldz = camera.eye.elements[2] + f.elements[2] * t;
 
-    const ix = Math.floor(tx + n / 2);
-    const iz = Math.floor(tz + n / 2);
+    const cellx = Math.floor(worldx + n / 2);
+    const cellz = Math.floor(worldz + n / 2);
 
-    if (ix === lastIx && iz === lastIz) continue;
-    lastIx = ix;
-    lastIz = iz;
+    if (cellx === lastCellx && cellz === lastCellz) continue;
+    lastCellx = cellx;
+    lastCellz = cellz;
 
-    if (ix < 0 || ix >= n || iz < 0 || iz >= n) break;
-    if (map[ix][iz] > 0) return { x: ix, z: iz };
+    if (cellx < 0 || cellx >= n || cellz < 0 || cellz >= n) break;
+    if (map[cellx][cellz] > 0) return { x: cellx, z: cellz };
   }
 
   return null;
@@ -318,7 +301,7 @@ function addBlock() {
   const cell = getCell();
   if (!cell) return;
 
-  const { x, z } = cell;
+  const {x, z} = cell;
   if (map[x][z] < 20) {
     map[x][z]++;
     walls = [];
@@ -329,7 +312,7 @@ function removeBlock() {
   const cell = getCell();
   if (!cell) return;
 
-  const { x, z } = cell;
+  const {x, z} = cell;
   if (map[x][z] > 0) {
     map[x][z]--;
     walls = [];
@@ -367,8 +350,8 @@ function convertCoordinatesEventToGL(ev) {
   var y = ev.clientY;
   var rect = ev.target.getBoundingClientRect();
 
-  x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
-  y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
+  x = ((x - rect.left) - canvas.width / 2) / (canvas.width / 2);
+  y = (canvas.height / 2 - (y - rect.top)) / (canvas.height / 2);
 
   return ([x, y]);
 }
@@ -463,11 +446,11 @@ const animalScaleXZ = 0.5;
 
 let animalPosX = 0;
 let animalPosZ = 0;
-let hasFoundOx = false;
+let foundOx = false;
 
 const explodeData = {
-  body:  {dir: [0, 1, 0], spin: 30},
-  head:  {dir: [0, 1, 1], spin: 60},
+  body: {dir: [0, 1, 0], spin: 30},
+  head: {dir: [0, 1, 1], spin: 60},
 
   upperlegFL: {dir: [-1, -1, 1], spin: 80},
   upperlegFR: {dir: [1, -1, 1], spin: 80},
@@ -479,12 +462,12 @@ const explodeData = {
   lowerlegBL: {dir: [-1, -1, -1], spin: 80},
   lowerlegBR: {dir: [1, -1, -1], spin: 80},
 
-  tail:  {dir: [0, -1, -1], spin: 100},
+  tail: {dir: [0, -1, -1], spin: 100},
   hornL: {dir: [-1, 1, 1], spin: 120},
   hornR: {dir: [1, 1, 1], spin: 120},
-  eyeL:  {dir: [-0.5, 1, 1], spin: 160},
-  eyeR:  {dir: [0.5, 1, 1], spin: 160},
-  nose:  {dir: [0, 1, 1], spin: 160},
+  eyeL: {dir: [-0.5, 1, 1], spin: 160},
+  eyeR: {dir: [0.5, 1, 1], spin: 160},
+  nose: {dir: [0, 1, 1], spin: 160},
   hoofFL: {dir: [-1, -1, 1], spin: 140},
   hoofFR: {dir: [1, -1, 1], spin: 140},
   hoofBL: {dir: [-1, -1, -1], spin: 140},
@@ -515,11 +498,11 @@ function initMap() {
 
 function randomizeAnimalPosition() {
   while (true) {
-    const gx = Math.floor(Math.random() * n);
-    const gz = Math.floor(Math.random() * n);
-    if (map[gx][gz] === 0) {
-      animalPosX = gx - n / 2 + 0.5;
-      animalPosZ = gz - n / 2 + 0.5;
+    const gridx = Math.floor(Math.random() * n);
+    const gridz = Math.floor(Math.random() * n);
+    if (map[gridx][gridz] === 0) {
+      animalPosX = gridx - n / 2 + 0.5;
+      animalPosZ = gridz - n / 2 + 0.5;
       break;
     }
   }
@@ -1007,7 +990,7 @@ function checkForOxFound() {
   const dist = Math.sqrt(dx * dx + dz * dz);
 
   if (dist < 1.5) {
-    hasFoundOx = true;
+    foundOx = true;
     const statusEl = document.getElementById('status');
     if (statusEl) {
       statusEl.innerText = 'You found it!';
