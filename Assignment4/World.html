@@ -15,6 +15,7 @@
     <script src="lib/cuon-utils.js"></script>
     <script src="lib/cuon-matrix.js"></script>
     <script src="Camera.js"></script>
+    <script src="Model.js"></script>
     <script src="World.js"></script>
     <script src="Points.js"></script>
     <script src="Triangles.js"></script>
@@ -27,10 +28,16 @@
     </div>
     <div id="status" style="color:black; font-family:monospace; margin-top:4px;"></div>
     <p>
+      Press L to place the spotlight!
+    </p>
+    <p>
       <button onclick="clearCanvas()">Clear</button>
     </p>
     <p>
       <button id="toggleNormals">Normals: OFF</button>
+    </p>
+    <p>
+      <button id="toggleLighting">Lighting: ON</button>
     </p>
     <p>
       Rotate <input type="range" min="0" max="90" value="5" id="rotate" />
@@ -39,7 +46,16 @@
       Light Angle <input type="range" min="0" max="360" value="0" id="lightAngle" />
     </p>
     <p>
-      Light Color <input type="range" min="0" max="100" value="0" id="lightColor" />
+      Spotlight Angle <input type="range" min="5" max="60" value="20" id="spotAngle" />
+    </p>
+    <p>
+      Light Color R <input type="range" min="0" max="100" value="100" id="lightR" />
+    </p>
+    <p>
+      Light Color G <input type="range" min="0" max="100" value="100" id="lightG" />
+    </p>
+    <p>
+      Light Color B <input type="range" min="0" max="100" value="100" id="lightB" />
     </p>
     <p>
       Legs Rotate 1 <input type="range" min="-25" max="25" value="0" id="leg1" />

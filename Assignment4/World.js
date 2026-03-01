@@ -37,9 +37,13 @@ var FSHADER_SOURCE =`
   uniform int u_useTexture;
   uniform float u_texColorWeight;
   uniform int u_showNormals;
+  uniform int u_useLighting;
   uniform vec3 u_LightPos;
   uniform vec3 u_ViewPos;
   uniform vec3 u_LightColor;
+  uniform vec3 u_SpotDir;
+  uniform float u_SpotCutoff;
+  uniform float u_SpotStr;
   void main() {
     vec3 n = normalize(v_normal);
     vec3 l = normalize(u_LightPos - v_worldPos);
@@ -52,7 +56,18 @@ var FSHADER_SOURCE =`
 
     float lighting = 0.8 * diff + ambient + 0.5 * spec;
 
-    vec3 lightingRGB = u_LightColor * lighting;
+    vec3 lightToFrag = normalize(v_worldPos - u_LightPos);
+    float cosTheta = dot(normalize(u_SpotDir), lightToFrag);
+
+    float spot = 0.0;
+
+    if (cosTheta > u_SpotCutoff) {
+      spot = pow(cosTheta, u_SpotStr);
+    }
+
+    float spotlight = 1.0 + u_SpotStr * spot;
+
+    vec3 lightingRGB = u_LightColor * lighting * spotlight;
 
     vec4 baseColor;
     if (u_showNormals == 1) {
@@ -72,13 +87,16 @@ var FSHADER_SOURCE =`
     }
     if (u_useTexture == 3) {
       gl_FragColor = baseColor;
+    } else if (u_useLighting == 0) {
+      gl_FragColor = baseColor;
     } else {
       gl_FragColor = vec4(baseColor.rgb * lightingRGB, baseColor.a);
     }
   }`;
 
 let canvas, gl, a_Position, a_UV, a_Normal, u_FragColor, u_ModelMatrix, u_GlobalRotation, u_ViewMatrix, u_ProjectionMatrix,
-    u_useTexture, u_Sampler0, u_texColorWeight, u_Sampler1, u_showNormals, camera, u_LightPos, u_ViewPos, u_LightColor;
+    u_useTexture, u_Sampler0, u_texColorWeight, u_Sampler1, u_showNormals, camera, u_LightPos, u_ViewPos, u_LightColor,
+    u_useLighting, u_SpotDir, u_SpotCutoff, u_SpotStr;
 let g_GlobalRotation = 0.0;
 let g_legRotate1 = 0.0;
 let g_legRotate2 = 0.0;
@@ -109,10 +127,19 @@ let g_fps = 0;
 
 let g_showNormals = false;
 
+let g_useLighting = true;
+
 let g_lightPos = [0.0, 3.0, -2.0];
 let g_lightAngle = 0;
 
 let g_lightColor = [1.0, 1.0, 1.0];
+
+let g_spotDir = [0.0, -1.0, 0.0];
+let g_spotCutoff = 20.0;
+let g_spotStr = 3.0;
+let g_useOrbitLight = true;
+
+let g_model = null;
 
 function setupWebGL() {
   // Retrieve <canvas> element
@@ -232,6 +259,30 @@ function connectVariablesToGLSL() {
     return;
   }
 
+  u_useLighting = gl.getUniformLocation(gl.program, 'u_useLighting');
+  if (!u_useLighting) {
+    console.log('Failed to get the storage location of u_useLighting');
+    return;
+  }
+
+  u_SpotDir = gl.getUniformLocation(gl.program, 'u_SpotDir');
+  if (!u_SpotDir) {
+    console.log('Failed to get the storage location of u_SpotDir');
+    return;
+  }
+
+  u_SpotCutoff = gl.getUniformLocation(gl.program, 'u_SpotCutoff');
+  if (!u_SpotCutoff) {
+    console.log('Failed to get the storage location of u_SpotCutoff');
+    return;
+  }
+
+  u_SpotStr = gl.getUniformLocation(gl.program, 'u_SpotStr');
+  if (!u_SpotStr) {
+    console.log('Failed to get the storage location of u_SpotStr');
+    return;
+  }
+
   var identityM = new Matrix4();
   gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
 
@@ -278,7 +329,13 @@ function addUiEvents() {
 
   document.getElementById('lightAngle').addEventListener('input', function() {
     g_lightAngle = Number(this.value);
+    g_useOrbitLight = true;
     updateLight();
+    renderScene();
+  });
+
+  document.getElementById('spotAngle').addEventListener('input', function() {
+    g_spotStr = Number(this.value) * 3.0;
     renderScene();
   });
 
@@ -292,11 +349,40 @@ function addUiEvents() {
     normals.textContent = 'Normals: OFF';
   }
 
-  document.getElementById('lightColor').addEventListener('input', function() {
-    const c = Number(this.value) / 100;
-    g_lightColor = [c, c, c];
-    renderScene();
-  });
+  const lightR = document.getElementById('lightR');
+  const lightG = document.getElementById('lightG');
+  const lightB = document.getElementById('lightB');
+
+  if (lightR && lightG && lightB) {
+    g_lightColor = [
+      Number(lightR.value) / 100,
+      Number(lightG.value) / 100,
+      Number(lightB.value) / 100
+    ];
+
+    lightR.addEventListener('input', function() {
+      g_lightColor[0] = Number(this.value) / 100;
+      renderScene();
+    });
+    lightG.addEventListener('input', function() {
+      g_lightColor[1] = Number(this.value) / 100;
+      renderScene();
+    });
+    lightB.addEventListener('input', function() {
+      g_lightColor[2] = Number(this.value) / 100;
+      renderScene();
+    });
+  }
+
+  var lightingBtn = document.getElementById('toggleLighting');
+  if (lightingBtn) {
+    lightingBtn.textContent = g_useLighting ? 'Lighting: ON' : 'Lighting: OFF';
+    lightingBtn.addEventListener('click', function() {
+      g_useLighting = !g_useLighting;
+      this.textContent = g_useLighting ? 'Lighting: ON' : 'Lighting: OFF';
+      renderScene();
+    });
+  }
 }
 
 function main() {
@@ -309,6 +395,10 @@ function main() {
   randomizeAnimalPosition();
 
   connectVariablesToGLSL();
+
+  g_model = new Model('obj/shoe.obj');
+  g_model.matrix.scale(0.5, 0.5, 0.5);
+  g_model.render();
 
   addUiEvents();
 
@@ -342,6 +432,7 @@ function main() {
     else if (k === 'e') {ev.preventDefault(); camera.panRight();}
     else if (k === 'f') {ev.preventDefault(); addBlock();}
     else if (k === 'g') {ev.preventDefault(); removeBlock();}
+    else if (k === 'l') {ev.preventDefault(); placeSpotlight();}
     renderScene();
   });
 
@@ -390,6 +481,19 @@ function getCell() {
   }
 
   return null;
+}
+
+function placeSpotlight() {
+  const cell = getCell();
+  if (!cell) return;
+
+  const {x, z} = cell;
+  g_lightPos[0] = x - n / 2 + 0.5;
+  g_lightPos[1] = 3.0;
+  g_lightPos[2] = z - n / 2 + 0.5;
+
+  g_spotDir = [0.0, -1.0, 0.0];
+  g_useOrbitLight = false;
 }
 
 function addBlock() {
@@ -623,6 +727,14 @@ function renderScene() {
 
   gl.uniform3f(u_LightColor, g_lightColor[0], g_lightColor[1], g_lightColor[2]);
 
+  gl.uniform1i(u_useLighting, g_useLighting ? 1 : 0);
+
+  const cutoff = Math.cos(25.0 * Math.PI / 180.0);
+
+  gl.uniform3f(u_SpotDir, g_spotDir[0], g_spotDir[1], g_spotDir[2]);
+  gl.uniform1f(u_SpotCutoff, cutoff);
+  gl.uniform1f(u_SpotStr, g_spotStr);
+
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   let explodeT = 0;
@@ -651,6 +763,12 @@ function renderScene() {
   sphere.matrix.setTranslate(0.0, 1.5, -5.0);
   sphere.matrix.scale(0.5, 0.5, 0.5);
   sphere.render();
+
+  if (g_model) {
+    g_model.matrix.setTranslate(0.0, 0.5, -3.0);
+    g_model.matrix.scale(0.5, 0.5, 0.5);
+    g_model.render();
+  }
 
   const lightCube = new Cube();
   lightCube.color = [1.0, 1.0, 0.0, 1.0];
@@ -1100,6 +1218,8 @@ function tick() {
 }
 
 function updateLight() {
+  if (!g_useOrbitLight) return;
+
   var radius = 8.0;
   var baseAngle = g_lightAngle;
   var orbit = g_animate ? g_seconds * 20.0 : 0.0;
