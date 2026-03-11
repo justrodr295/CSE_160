@@ -85,7 +85,7 @@ function main() {
   ground.setScale(1000, 0.5, 1000);
   ground.setTexture('img/grass.jpg', 12, 12);
 
-  spawnRandomShapes(threeScene, 30);
+  spawnRandomShapes(threeScene, 1000);
 
   const objLoader = new OBJLoader();
   objLoader.load(
